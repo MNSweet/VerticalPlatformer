@@ -78,7 +78,7 @@ function update() {
 	if(onG) {
 		xv *= 0.8;
 	} else {
-		if(yv < 10) {
+		if(yv < 15) {
 			yv += grav
 		};
 	}
@@ -97,16 +97,16 @@ function update() {
 				px >= plat[i].x && 
 				px <= plat[i].x + plat[i].w && 
 				py >= plat[i].y && 
-				py <= plat[i].y + plat[i].h-8
+				py <= plat[i].y + plat[i].h-(grid/2)
 			) || (
 				px+pw >= plat[i].x &&
 				px+pw <= plat[i].x + plat[i].w && 
 				py >= plat[i].y && 
-				py <= plat[i].y+plat[i].h-8
+				py <= plat[i].y+plat[i].h-(grid/2)
 			)
 			
 		) {
-		currentPlat = JSON.stringify(plat[i]);
+			currentPlat = JSON.stringify(plat[i]);
 			py=plat[i].y-1;
 			onG=true;
 		}
@@ -177,7 +177,7 @@ function place_goal(platformList) {
 		var rerollGoal			= false,
 			currentPlatform 	= platformList[i],
 			currentGoalCheck 	= {
-				x: Math.floor((currentPlatform.x + (currentPlatform.w/2) - goal.w/2)/16)*16,
+				x: getBase16(currentPlatform.x + (currentPlatform.w/2) - goal.w/2),
 				y: Math.floor(currentPlatform.y - goal.h+1),
 				w: goal.w,
 				h: goal.h
@@ -220,7 +220,7 @@ function place_goal(platformList) {
 			return;
 		};
 	}
-	//refresh();
+	refresh();
 	return;
 }
 function getRandomInt(min, max) {

@@ -6,7 +6,7 @@ var state=0,
 	pw=19,
 	ph=32,
 	xv=yv=0,
-	v=4,
+	v=8,
 	ex=ey=50,
 	ew=20,
 	eh=20,
@@ -50,7 +50,6 @@ window.onload=function() {
 			x: e.clientX - canv.offsetLeft,
 			y: e.clientY - canv.offsetTop
 		};
-		console.log(mousePos);
 		if(state == 2 || state == 4) {
 			if(
 				mousePos.x>=startButton.x && 
@@ -58,7 +57,6 @@ window.onload=function() {
 				mousePos.y>=startButton.y && 
 				mousePos.y<=startButton.y+startButton.h
 			) {
-				console.log("Click");
 				init();
 				return;
 			}
@@ -116,6 +114,8 @@ function refresh() {
 		return b.y - a.y;
 	});
 	place_goal(plat);
+	exv=1;
+	eyv=1;
 }
 function update() {
 	//Player Movement
@@ -138,18 +138,20 @@ function update() {
 	onG=false;
 
 	//Enemy Movement
-	var diffX = px - ex;
-	var diffY = (py - ph/2) - ey;
-
-	if(diffX > 0)
-		ex += 1;
-	else
-		ex -= 1;
-		
-	if(diffY > 0)
-		ey += 1;
-	else
-		ey -= 1;
+	diffX = px - ex;
+	diffY = (py - ph/2) - ey;
+	if(diffX > 2 || diffX < -2) {
+		if(diffX > 0)
+			ex += 1+exv;
+		else
+			ex -= 1+exv;
+	}
+	if(diffY > 2 || diffY < -2) {
+		if(diffY > 0)
+			ey += 1+eyv;
+		else
+			ey -= 1+eyv;
+	}
 
 	//Player in Goal
 	if(
@@ -197,12 +199,28 @@ function update() {
 			onG=true;
 		}
 	}
-    if(py>canv.height+10) {py=1;}
-    if(py<-10) {py=canv.height-1;}
-    if(px>canv.width+10) {px=1;}
-    if(px<-10) {px=canv.width-1;}
+	if(py>canv.height+10) {
+		py=1;
+		if(eyv<4){++eyv};
+		if(exv<4){++exv};
+	}
+	if(py<-10) {
+		py=canv.height-1;
+		if(eyv<4){++eyv};
+		if(exv<4){++exv};
+	}
+	if(px>canv.width+10) {
+		px=1;
+		if(eyv<4){++eyv};
+		if(exv<4){++exv};
+	}
+	if(px<-10) {
+		px=canv.width-1;
+		if(eyv<4){++eyv};
+		if(exv<4){++exv};
+	}
 
-    //Draw Background
+	//Draw Background
 	ctx.fillStyle=ctx.createPattern(imgLib.bg, 'repeat');
 	ctx.fillRect(0,0,canv.width,canv.height);
 

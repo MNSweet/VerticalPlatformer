@@ -3,7 +3,7 @@
 <script>
 var state=0,
 	px=py=300,
-	pw=32,
+	pw=25,
 	ph=32,
 	pd=0,
 	pxa=0,
@@ -16,28 +16,31 @@ var state=0,
 	ea=1,
 	ed=0,
 	debug=false,
-	grav=0.5,
+	grav=0.8,
 	onG=false,
 	currentPlat='{}',
 	holdLeft=holdRight=false,
 	plat=[],
 	score=0,
 	tick,
-	goal={x:0,y:0,w:32,h:48},
-	grid=16,
+	goal={x:0,y:0,w:32,h:64},
+	grid=32,
 	startButton={x:0,y:0,w:200,h:50},
 	imgLib={};
 	imgLib.bg		= new Image();
-	imgLib.bg.src	= 'bg.gif';
+	imgLib.bg.src	= 'bg.jpg';
 
 	imgLib.floor		= new Image();
-	imgLib.floor.src	= 'flatground.gif';
+	imgLib.floor.src	= 'flatground.jpg';
 
 	imgLib.platform		= new Image();
-	imgLib.platform.src	= 'platform.gif';
+	imgLib.platform.src	= 'platform.jpg';
+
+	imgLib.light		= new Image();
+	imgLib.light.src	= 'light.jpg';
 
 	imgLib.goal		= new Image();
-	imgLib.goal.src	= 'wall.gif';
+	imgLib.goal.src	= 'exit.jpg';
 
 	imgLib.monster		= new Image();
 	imgLib.monster.src	= 'monster.png';
@@ -96,7 +99,8 @@ function splashScreen(firstGame=false) {
 	ctx.fillText("Start",canv.width/2-33,startButton.y+35);
 }
 function init() {
-	state=3;
+	state=3;	
+	score=0;
 	px=py=300;
 	xv=yv=0;
 	ex=ey=50;
@@ -207,12 +211,12 @@ function update() {
 				px >= plat[i].x && 
 				px <= plat[i].x + plat[i].w && 
 				py >= plat[i].y && 
-				py <= plat[i].y + plat[i].h-(grid/2)
+				py <= plat[i].y+32// + plat[i].h-(grid/2)
 			) || (
 				px+pw >= plat[i].x &&
 				px+pw <= plat[i].x + plat[i].w && 
 				py >= plat[i].y && 
-				py <= plat[i].y+plat[i].h-(grid/2)
+				py <= plat[i].y+32//plat[i].h-(grid/2)
 			)
 			
 		) {
@@ -253,17 +257,27 @@ function update() {
 
 	//Build platfrom floor
 		ctx.fillStyle=ctx.createPattern(plat[i].f, 'repeat');
-		ctx.fillRect(plat[i].x,plat[i].y,plat[i].w,grid);
+		ctx.fillRect(plat[i].x,plat[i].y,plat[i].w,grid/4);
+
+	//Build platfrom floor
+		ctx.fillStyle=ctx.createPattern(imgLib.light, 'repeat');
+		ctx.fillRect(plat[i].x,plat[i].y-grid,plat[i].w,grid);
 	}
 
 	//Draw Goal
-	ctx.fillStyle=ctx.createPattern(imgLib.goal, 'repeat');
-	ctx.fillRect(goal.x,goal.y,goal.w,goal.h);
+	ctx.drawImage(
+		imgLib.goal, //image
+		0, //start crop x
+		0, //start crop y
+		grid*2,//crop width
+		grid*3,//crop height
+		goal.x, //render x
+		goal.y,//render y
+		goal.w, //render width
+		goal.h //render height
+	)
 
 	//Draw Player
-	//ctx.fillStyle="white";
-	//ctx.fillRect(Math.floor(px),Math.floor(py-ph),pw,ph);
-
 	ctx.drawImage(
 		imgLib.hero, //image
 		Math.floor(pxa) * 32, //start crop x
@@ -375,7 +389,7 @@ function place_goal(platformList) {
 		if(!rerollGoal) {
 			//console.log("Test platform "+i+": success");
 			goal.x = currentGoalCheck.x;
-			goal.y = currentGoalCheck.y;
+			goal.y = currentGoalCheck.y-1;
 			//console.log("Goal");
 			//console.log(goal);
 			return;
@@ -388,7 +402,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 function getBase16(num) {
-  return Math.ceil(num / 16) * 16;
+  return Math.ceil(num / 32) * 32;
 }
 function keyDown(evt) {
 	switch(evt.keyCode) {
@@ -420,6 +434,7 @@ function keyUp(evt) {
 			break;
 	}
 }
+
 </script>
 </head>
 <body>

@@ -1,74 +1,99 @@
 <html>
 <head>
 <script>
-var state=0,
-	px=py=300,
-	pw=25,
-	ph=32,
-	pd=0,
-	pxa=0,
-	xv=yv=0,
-	v=8,
-	ex=ey=50,
-	ew=64,
-	eh=64,
-	exv=eyv=0,
-	ea=1,
-	ed=0,
-	debug=false,
-	grav=0.8,
-	onG=false,
-	currentPlat='{}',
-	holdLeft=holdRight=false,
-	plat=[],
-	score=0,
-	tick,
-	goal={x:0,y:0,w:32,h:64},
-	grid=32,
-	startButton={x:0,y:0,w:200,h:50},
-	imgLib={};
-	imgLib.bg		= new Image();
-	imgLib.bg.src	= 'bg.jpg';
+var game = {
+		'canv':false,
+		'state':0,
+		'debug':false,
+		'gravity':0.8,
+		'currentPlatforms':'{}',
+		'platforms':[],
+		'score':0,
+		'tick':false,
+		'grid':32,
+		'startButton': {
+			'x':0,
+			'y':0,
+			'width':200,
+			'height':50
+		},
+		'goal': {
+			'x':0,
+			'y':0,
+			'width':32,
+			'height':64
+		},
+		'interaction': {
+			'goLeft':false,
+			'goRight':false 
+		}
+	},
+	player = {
+		'x':300,
+		'y':300,
+		'width':25,
+		'height':32,
+		'direction':0,
+		'animationFrame':0,
+		'xVelocity':0,
+		'yVelocity':0,
+		'velocityModifier':8,
+		'onGround':false
+	},
+	enemy1 = {
+		'x':50,
+		'y':50,
+		'width':64,
+		'height':64,
+		'direction':0,
+		'animationFrame':1,
+		'xVelocity':0,
+		'yVelocity':0,
+		'velocityModifier':8
+	},
+	imgLib = {};
+		imgLib.bg		= new Image();
+		imgLib.bg.src	= 'bg.jpg';
 
-	imgLib.floor		= new Image();
-	imgLib.floor.src	= 'flatground.jpg';
+		imgLib.floor		= new Image();
+		imgLib.floor.src	= 'flatground.jpg';
 
-	imgLib.platform		= new Image();
-	imgLib.platform.src	= 'platform.jpg';
+		imgLib.platform		= new Image();
+		imgLib.platform.src	= 'platform.jpg';
 
-	imgLib.light		= new Image();
-	imgLib.light.src	= 'light.jpg';
+		imgLib.light		= new Image();
+		imgLib.light.src	= 'light.jpg';
 
-	imgLib.goal		= new Image();
-	imgLib.goal.src	= 'exit.jpg';
+		imgLib.goal		= new Image();
+		imgLib.goal.src	= 'exit.jpg';
 
-	imgLib.monster		= new Image();
-	imgLib.monster.src	= 'monster.png';
+		imgLib.monster		= new Image();
+		imgLib.monster.src	= 'monster.png';
 
-	imgLib.hero		= new Image();
-	imgLib.hero.src	= 'hero.gif';
+		imgLib.hero		= new Image();
+		imgLib.hero.src	= 'hero.gif';
 
 
-window.onload=function() {
-	state=1;
-	canv=document.getElementById("gc");
-	startButton.x=canv.width/2-startButton.w/2;
-	startButton.y=canv.height/2-startButton.h/2+60;
-	ctx=canv.getContext("2d");
-	ctx.font="30px Arial";
+window.onload = function() {
+	game.state = 1;
+	game.canv = document.getElementById("gc");
+	game.startButton.x = game.canv.width/2-game.startButton.width/2;
+	game.startButton.y = game.canv.height/2-game.startButton.height/2+60;
+	ctx = game.canv.getContext("2d");
+	ctx.font ="30px Arial";
 	document.addEventListener("keydown",keyDown);
 	document.addEventListener("keyup",keyUp);
-	canv.addEventListener('click', (e) => {
+	game.canv.addEventListener('click', (e) => {
 		const mousePos = {
-			x: e.clientX - canv.offsetLeft,
-			y: e.clientY - canv.offsetTop
+			x: e.clientX - game.canv.offsetLeft,
+			y: e.clientY - game.canv.offsetTop
 		};
-		if(state == 2 || state == 4) {
+		if(game.state == 2 || game.state == 4) {
 			if(
-				mousePos.x>=startButton.x && 
-				mousePos.x<=startButton.x+startButton.w && 
-				mousePos.y>=startButton.y && 
-				mousePos.y<=startButton.y+startButton.h
+				mousePos.x>= game.startButton.x && 
+				mousePos.x<= game.startButton.x+game.startButton.width && 
+				mousePos.y>= game.startButton.y && 
+				mousePos.y<= game.startButton.y+game.startButton.height
 			) {
 				init();
 				return;
@@ -77,191 +102,189 @@ window.onload=function() {
 	});
 	splashScreen(true);
 }
-function splashScreen(firstGame=false) {
-	state=2;
-	ctx.fillStyle=ctx.createPattern(imgLib.bg, 'repeat');
-	ctx.fillRect(0,0,canv.width,canv.height);
-	clearInterval(tick);
-	var heightOffset = canv.height/2-30;
-	ctx.fillStyle="white";
+function splashScreen(firstGame = false) {
+	game.state = 2;
+	ctx.fillStyle = ctx.createPattern(imgLib.bg, 'repeat');
+	ctx.fillRect(0,0,game.canv.width,game.canv.height);
+	clearInterval(game.tick);
+	var heightOffset = game.canv.height/2-30;
+	ctx.fillStyle ="white";
 	if(!firstGame) {
-		state=4;
+		game.state = 4;
 		//Draw Score
-		ctx.fillText("Game Over",canv.width/2-77,heightOffset);
+		ctx.fillText("Game Over",game.canv.width/2-77,heightOffset);
 		heightOffset = heightOffset+40;
-		ctx.fillText("Final Score: " + score,canv.width/2-92,heightOffset);
+		ctx.fillText("Final Score: " + game.score,game.canv.width/2-92,heightOffset);
 	}else{
-		ctx.fillText("Game Title",canv.width/2-77,heightOffset);
+		ctx.fillText("Game Title",game.canv.width/2-77,heightOffset);
 	}
-	ctx.fillStyle="white";
-	ctx.fillRect(startButton.x,startButton.y,startButton.w,startButton.h);
-	ctx.fillStyle="black";
-	ctx.fillText("Start",canv.width/2-33,startButton.y+35);
+	ctx.fillStyle ="white";
+	ctx.fillRect(game.startButton.x,game.startButton.y,game.startButton.width,game.startButton.height);
+	ctx.fillStyle ="black";
+	ctx.fillText("Start",game.canv.width/2-33,game.startButton.y+35);
 }
 function init() {
-	state=3;	
-	score=0;
-	px=py=300;
-	xv=yv=0;
-	ex=ey=50;
-	tick=setInterval(update,1000/30);
+	game.state = 3;	
+	game.score = 0;
+	player.x = player.y = 300;
+	player.xVelocity = player.yVelocity = 0;
+	enemy1.x = enemy1.y = 50;
+	game.tick = setInterval(update,1000/30);
 	refresh();
 }
 function refresh() {
-	plat=[];
-	for(i=0;i<50;i++) {
+	game.platforms =[];
+	for(i = 0;i<30;i++) {
 		var platform = {
-		x:getBase16(getRandomInt(0,canv.width)),
-		y:getBase16(getRandomInt(0,canv.height)),
+		x:getBase16(getRandomInt(0,game.canv.width)),
+		y:getBase16(getRandomInt(0,game.canv.height)),
 		w:getBase16(Math.random()*100+30),
 		h:getBase16(Math.random()*30+20),
 		c:imgLib.platform,
 		f:imgLib.floor
 		}
-		if(platform.x < 0 || platform.x+platform.w > canv.width ||
-			platform.y < 0 || platform.y+platform.h > canv.height){
+		if(platform.x < 0 || platform.x+platform.w > game.canv.width ||
+			platform.y < 0 || platform.y+platform.h > game.canv.height){
 			continue;
 		};
-		plat.push(platform);
+		game.platforms.push(platform);
 	}
-	plat.sort(function (a, b) {
+	game.platforms.sort(function (a, b) {
 		return b.y - a.y;
 	});
-	place_goal(plat);
-	exv=1;
-	eyv=1;
+	place_goal(game.platforms);
+	enemy1.xVelocity = 1;
+	enemy1.yVelocity = 1;
 }
 function update() {
 	//Player Movement
-	if(holdLeft) {
-		pd=1;
-		pxa=pxa+.8;
-		xv=-v;
+	if(game.interaction.goLeft) {
+		player.direction = 1;
+		player.animationFrame = player.animationFrame+.8;
+		player.xVelocity =-player.velocityModifier;
 	}
-	if(holdRight) {
-		pd=0;
-		pxa=pxa+.8;
-		xv=v;
+	if(game.interaction.goRight) {
+		player.direction = 0;
+		player.animationFrame = player.animationFrame+.8;
+		player.xVelocity = player.velocityModifier;
 	}
-	if(pxa >= 4) {pxa=0};
-	if(ea > 3) {ea=0};
-	px+=xv;
-	py+=yv;
-	if(onG) {
-		xv *= 0.8;
+	if(player.animationFrame >= 4) {player.animationFrame = 0};
+	if(enemy1.animationFrame > 3) {enemy1.animationFrame = 0};
+	player.x+= player.xVelocity;
+	player.y+= player.yVelocity;
+	if(player.onGround) {
+		player.xVelocity *= 0.8;
 	} else {
-		if(yv < 15) {
-			yv += grav
+		if(player.yVelocity < 15) {
+			player.yVelocity += game.gravity
 		};
-		if(yv > 0) {pxa=4;}
-		else {pxa=5;}
+		if(player.yVelocity > 0) {player.animationFrame = 4;}
+		else {player.animationFrame = 5;}
 	}
 
-	onG=false;
+	player.onGround = false;
 
 	//Enemy Movement
-	diffX = (px + pw/2) - (ex + ew/2);
-	diffY = (py - ph/3*2) - (ey - eh/2);
+	diffX = (player.x + player.width/2) - (enemy1.x + enemy1.width/2);
+	diffY = (player.y - player.height/3*2) - (enemy1.y - enemy1.height/2);
 	if(diffX > 1 || diffX < -1) {
 		if(diffX > 0) {
-			ed = 0;
-			ex += 1+exv;
+			enemy1.direction = 0;
+			enemy1.x += 1+enemy1.xVelocity;
 		}
 		else {
-			ed = 1;
-			ex -= 1+exv;
+			enemy1.direction = 1;
+			enemy1.x -= 1+enemy1.xVelocity;
 		}
 	}
 	if(diffY > 1 || diffY < -1) {
 		if(diffY > 0)
-			ey += 1+eyv;
+			enemy1.y += 1+enemy1.yVelocity;
 		else
-			ey -= 1+eyv;
+			enemy1.y -= 1+enemy1.yVelocity;
 	}
 
 	//Player in Goal
 	if(
-		px+(pw/2)>=goal.x && 
-		px+(pw/2)<=goal.x+goal.w && 
-		py-(ph/2)>=goal.y && 
-		py-(ph/2)<=goal.y+goal.h
+		player.x+(player.width/2)>= game.goal.x && 
+		player.x+(player.width/2)<= game.goal.x+game.goal.width && 
+		player.y-(player.height/2)>= game.goal.y && 
+		player.y-(player.height/2)<= game.goal.y+game.goal.height
 	) {
-		console.log("In the goal");
-		score++;
+		game.score++;
 		refresh();
 		return;
 	}
 
 	//Enemy on Player
 	if(
-		ex+(ew/2)>=px && 
-		ex+(ew/2)<=px+pw && 
-		ey-(eh/2)>=py-ph && 
-		ey-(eh/2)<=py
+		enemy1.x+(enemy1.width/2)>= player.x && 
+		enemy1.x+(enemy1.width/2)<= player.x+player.width && 
+		enemy1.y-(enemy1.height/2)>= player.y-player.height && 
+		enemy1.y-(enemy1.height/2)<= player.y
 	) {
-		console.log("Game Over");
 		splashScreen();
 		return;
 	}
 
-	currentPlat = '{}';
-	for(i=0;i<plat.length;i++) {
+	game.currentPlatform = '{}';
+	for(i = 0;i<game.platforms.length;i++) {
 		if(
 			(
-				px >= plat[i].x && 
-				px <= plat[i].x + plat[i].w && 
-				py >= plat[i].y && 
-				py <= plat[i].y+32// + plat[i].h-(grid/2)
+				player.x >= game.platforms[i].x && 
+				player.x <= game.platforms[i].x + game.platforms[i].w && 
+				player.y >= game.platforms[i].y && 
+				player.y <= game.platforms[i].y+32// + game.platforms[i].h-(game.grid/2)
 			) || (
-				px+pw >= plat[i].x &&
-				px+pw <= plat[i].x + plat[i].w && 
-				py >= plat[i].y && 
-				py <= plat[i].y+32//plat[i].h-(grid/2)
+				player.x+player.width >= game.platforms[i].x &&
+				player.x+player.width <= game.platforms[i].x + game.platforms[i].w && 
+				player.y >= game.platforms[i].y && 
+				player.y <= game.platforms[i].y+32//game.platforms[i].h-(game.grid/2)
 			)
 			
 		) {
-			currentPlat = JSON.stringify(plat[i]);
-			py=plat[i].y-1;
-			onG=true;
+			game.currentPlatform = JSON.stringify(game.platforms[i]);
+			player.y = game.platforms[i].y-1;
+			player.onGround = true;
 		}
 	}
-	if(py>canv.height+10) {
-		py=1;
-		if(eyv<4){++eyv};
-		if(exv<4){++exv};
+	if(player.y>game.canv.height+10) {
+		player.y = 1;
+		if(enemy1.yVelocity<4){++enemy1.yVelocity};
+		if(enemy1.xVelocity<4){++enemy1.xVelocity};
 	}
-	if(py<-10) {
-		py=canv.height-1;
-		if(eyv<4){++eyv};
-		if(exv<4){++exv};
+	if(player.y<-10) {
+		player.y = game.canv.height-1;
+		if(enemy1.yVelocity<4){++enemy1.yVelocity};
+		if(enemy1.xVelocity<4){++enemy1.xVelocity};
 	}
-	if(px>canv.width+10) {
-		px=1;
-		if(eyv<4){++eyv};
-		if(exv<4){++exv};
+	if(player.x>game.canv.width+10) {
+		player.x = 1;
+		if(enemy1.yVelocity<4){++enemy1.yVelocity};
+		if(enemy1.xVelocity<4){++enemy1.xVelocity};
 	}
-	if(px<-10) {
-		px=canv.width-1;
-		if(eyv<4){++eyv};
-		if(exv<4){++exv};
+	if(player.x<-10) {
+		player.x = game.canv.width-1;
+		if(enemy1.yVelocity<4){++enemy1.yVelocity};
+		if(enemy1.xVelocity<4){++enemy1.xVelocity};
 	}
 
 	//Draw Background
-	ctx.fillStyle=ctx.createPattern(imgLib.bg, 'repeat');
-	ctx.fillRect(0,0,canv.width,canv.height);
+	ctx.fillStyle = ctx.createPattern(imgLib.bg, 'repeat');
+	ctx.fillRect(0,0,game.canv.width,game.canv.height);
 
-	for(i=0;i<plat.length;i++) {
+	for(i = 0;i<game.platforms.length;i++) {
 	//Build platfrom
-		ctx.fillStyle=ctx.createPattern(plat[i].c, 'repeat');
-		ctx.fillRect(plat[i].x,plat[i].y,plat[i].w,plat[i].h);
+		ctx.fillStyle = ctx.createPattern(game.platforms[i].c, 'repeat');
+		ctx.fillRect(game.platforms[i].x,game.platforms[i].y,game.platforms[i].w,game.platforms[i].h);
 
 	//Build platfrom floor
-		ctx.fillStyle=ctx.createPattern(plat[i].f, 'repeat');
-		ctx.fillRect(plat[i].x,plat[i].y,plat[i].w,grid/4);
+		ctx.fillStyle = ctx.createPattern(game.platforms[i].f, 'repeat');
+		ctx.fillRect(game.platforms[i].x,game.platforms[i].y,game.platforms[i].w,game.grid/4);
 
 	//Build platfrom floor
-		ctx.fillStyle=ctx.createPattern(imgLib.light, 'repeat');
-		ctx.fillRect(plat[i].x,plat[i].y-grid,plat[i].w,grid);
+		ctx.fillStyle = ctx.createPattern(imgLib.light, 'repeat');
+		ctx.fillRect(game.platforms[i].x,game.platforms[i].y-game.grid,game.platforms[i].w,game.grid);
 	}
 
 	//Draw Goal
@@ -269,78 +292,78 @@ function update() {
 		imgLib.goal, //image
 		0, //start crop x
 		0, //start crop y
-		grid*2,//crop width
-		grid*3,//crop height
-		goal.x, //render x
-		goal.y,//render y
-		goal.w, //render width
-		goal.h //render height
+		game.grid*2,//crop width
+		game.grid*3,//crop height
+		game.goal.x, //render x
+		game.goal.y,//render y
+		game.goal.width, //render width
+		game.goal.height //render height
 	)
 
 	//Draw Player
 	ctx.drawImage(
 		imgLib.hero, //image
-		Math.floor(pxa) * 32, //start crop x
-		pd * 32, //start crop y
-		pw,//crop width
-		ph,//crop height
-		Math.floor(px), //render x
-		Math.floor(py-ph),//render y
-		pw, //render width
-		ph //render height
+		Math.floor(player.animationFrame) * 32, //start crop x
+		player.direction * 32, //start crop y
+		player.width,//crop width
+		player.height,//crop height
+		Math.floor(player.x), //render x
+		Math.floor(player.y-player.height),//render y
+		player.width, //render width
+		player.height //render height
 	)
 
 	//Draw Enemy
-	ea = ea+.6;
-	if(ea > 3) {ea=0};
-	var flyingMod = Math.floor(ea) % 4;
+	enemy1.animationFrame = enemy1.animationFrame+.6;
+	if(enemy1.animationFrame > 3) {enemy1.animationFrame = 0};
+	var flyingMod = Math.floor(enemy1.animationFrame) % 4;
 
 	ctx.drawImage(
 		imgLib.monster, //image
 		flyingMod * 64, //start crop x
-		ed * 64, //start crop y
-		ew, //crop width
-		eh,//crop height
-		Math.floor(ex), //render x
-		Math.floor(ey-eh),//render y
-		ew, //render width
-		eh //render height
+		enemy1.direction * 64, //start crop y
+		enemy1.width, //crop width
+		enemy1.height,//crop height
+		Math.floor(enemy1.x), //render x
+		Math.floor(enemy1.y-enemy1.height),//render y
+		enemy1.width, //render width
+		enemy1.height //render height
 	)
 
 	//Draw Score
-	ctx.fillStyle="white";
-	ctx.fillText(score,10,40);
+	ctx.fillStyle ="white";
+	ctx.fillText(game.score,10,40);
 
-	if(debug) {
+	if(game.debug) {
 		ctx.save();
 
-		ctx.fillStyle="red";
-		ctx.fillRect(ex+(ew/2),0,1,canv.width);
-		ctx.fillRect(0,ey-(eh/2),canv.height,1);
-		ctx.fillRect(Math.floor(px),Math.floor(py-2),2,2);
-		ctx.fillRect(Math.floor(px+pw-2),Math.floor(py-2),2,2);
-		ctx.fillRect(Math.floor(px+(pw/2)-1),Math.floor(py-(ph/2)-1),3,3);
+		ctx.fillStyle ="red";
+		ctx.fillRect(enemy1.x+(enemy1.width/2),0,1,game.canv.width);
+		ctx.fillRect(0,enemy1.y-(enemy1.height/2),game.canv.height,1);
+		ctx.fillRect(Math.floor(player.x),Math.floor(player.y-2),2,2);
+		ctx.fillRect(Math.floor(player.x+player.width-2),Math.floor(player.y-2),2,2);
+		ctx.fillRect(Math.floor(player.x+(player.width/2)-1),Math.floor(player.y-(player.height/2)-1),3,3);
 
 
-		ctx.font="10px monospace";
+		ctx.font ="10px monospace";
 		var debuglog = [
-			"X: " + Math.round(px),
-			"Y: " + Math.round(py),
-			"VelY: " + Math.round(yv),
-			"Moving: " + holdLeft || holdRight,
-			"Jumping: " + !onG,
-			"Grounded: " + onG,
-			"Interacting with: " + currentPlat,
+			"X: " + Math.round(player.x),
+			"Y: " + Math.round(player.y),
+			"VelY: " + Math.round(player.yVelocity),
+			"Moving: " + game.interaction.goLeft || game.interaction.goRight,
+			"Jumping: " + !player.onGround,
+			"Grounded: " + player.onGround,
+			"Interacting with: " + game.currentPlatform,
 			"Goal:",
-			"- TopLeft("+goal.x+"/"+goal.y+")",
-			"- TopRight("+(goal.x+goal.w)+"/"+goal.y+")",
-			"- BottomLeft("+goal.x+"/"+(goal.y+goal.h)+")",
-			"- BottomRight("+(goal.x+goal.w)+"/"+(goal.y+goal.h)+")"
+			"- TopLeft("+game.goal.x+"/"+game.goal.y+")",
+			"- TopRight("+(game.goal.x+game.goal.width)+"/"+game.goal.y+")",
+			"- BottomLeft("+game.goal.x+"/"+(game.goal.y+game.goal.height)+")",
+			"- BottomRight("+(game.goal.x+game.goal.width)+"/"+(game.goal.y+game.goal.height)+")"
 		];
 		ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
 		ctx.fillRect(10,50,150,12*debuglog.length);
 
-		ctx.fillStyle="white";
+		ctx.fillStyle ="white";
 		for (var i = 0; i < debuglog.length; i++) {
 			ctx.fillText(debuglog[i],10,60+12*i);
 		};
@@ -352,46 +375,39 @@ function place_goal(platformList) {
 		var rerollGoal			= false,
 			currentPlatform 	= platformList[i],
 			currentGoalCheck 	= {
-				x: getBase16(currentPlatform.x + (currentPlatform.w/2) - goal.w/2),
-				y: Math.floor(currentPlatform.y - goal.h+1),
-				w: goal.w,
-				h: goal.h
+				x: getBase16(currentPlatform.x + (currentPlatform.w/2) - game.goal.width/2),
+				y: Math.floor(currentPlatform.y - game.goal.height+1),
+				w: game.goal.width,
+				h: game.goal.height
 			};
 		for (var j = 0; j < platformList.length; j++) {
-			if(i==j) {continue;};
-			//console.log("Test platform "+i+"-"+j);
+			if(i == j) {continue;};
 			if(
 				//Check top left corner for overlap
-				(currentGoalCheck.x>plat[j].x && currentGoalCheck.x<plat[j].x+plat[j].w &&
-					currentGoalCheck.y>plat[j].y && currentGoalCheck.y<plat[j].y+plat[j].h) ||
+				(currentGoalCheck.x>game.platforms[j].x && currentGoalCheck.x<game.platforms[j].x+game.platforms[j].w &&
+					currentGoalCheck.y>game.platforms[j].y && currentGoalCheck.y<game.platforms[j].y+game.platforms[j].h) ||
 
 				//Check top right corner for overlap
-				(currentGoalCheck.x+currentGoalCheck.w>plat[j].x && currentGoalCheck.x+currentGoalCheck.w<plat[j].x+plat[j].w &&
-					currentGoalCheck.y>plat[j].y && currentGoalCheck.y<plat[j].y+plat[j].h) ||
+				(currentGoalCheck.x+currentGoalCheck.w>game.platforms[j].x && currentGoalCheck.x+currentGoalCheck.w<game.platforms[j].x+game.platforms[j].w &&
+					currentGoalCheck.y>game.platforms[j].y && currentGoalCheck.y<game.platforms[j].y+game.platforms[j].h) ||
 
 				//Check bottom left corner for overlap
-				(currentGoalCheck.x>plat[j].x && currentGoalCheck.x<plat[j].x+plat[j].w &&
-					currentGoalCheck.y+currentGoalCheck.h>plat[j].y && currentGoalCheck.y+currentGoalCheck.h<plat[j].y+plat[j].h) ||
+				(currentGoalCheck.x>game.platforms[j].x && currentGoalCheck.x<game.platforms[j].x+game.platforms[j].w &&
+					currentGoalCheck.y+currentGoalCheck.h>game.platforms[j].y && currentGoalCheck.y+currentGoalCheck.h<game.platforms[j].y+game.platforms[j].h) ||
 
 				//Check bottom right corner for overlap
-				(currentGoalCheck.x+currentGoalCheck.w>plat[j].x && currentGoalCheck.x+currentGoalCheck.w<plat[j].x+plat[j].w &&
-					currentGoalCheck.y+currentGoalCheck.h>plat[j].y && currentGoalCheck.y+currentGoalCheck.h<plat[j].y+plat[j].h)
+				(currentGoalCheck.x+currentGoalCheck.w>game.platforms[j].x && currentGoalCheck.x+currentGoalCheck.w<game.platforms[j].x+game.platforms[j].w &&
+					currentGoalCheck.y+currentGoalCheck.h>game.platforms[j].y && currentGoalCheck.y+currentGoalCheck.h<game.platforms[j].y+game.platforms[j].h)
 				){
 
 				//Overlapping with another block
-				//console.log("Test platform "+i+"-"+j+": Overlap");
 				rerollGoal = true;
 				break;
-			}else{	
-				//console.log("Test platform "+i+"-"+j+": No overlap");
 			}
 		}
 		if(!rerollGoal) {
-			//console.log("Test platform "+i+": success");
-			goal.x = currentGoalCheck.x;
-			goal.y = currentGoalCheck.y-1;
-			//console.log("Goal");
-			//console.log(goal);
+			game.goal.x = currentGoalCheck.x;
+			game.goal.y = currentGoalCheck.y-1;
 			return;
 		};
 	}
@@ -407,30 +423,30 @@ function getBase16(num) {
 function keyDown(evt) {
 	switch(evt.keyCode) {
 		case 37:
-			holdLeft=true;
+			game.interaction.goLeft = true;
 			break;
 		case 38:
-			if(onG) {
-				yv=-10;
+			if(player.onGround) {
+				player.yVelocity =-10;
 			}
 			break;
 		case 39:
-			holdRight=true;
+			game.interaction.goRight = true;
 			break;
 	}
 }
 function keyUp(evt) {
 	switch(evt.keyCode) {
 		case 37:
-			holdLeft=false;
+			game.interaction.goLeft = false;
 			break;
 		case 38:
-			if(yv<-3) {
-				yv=-3;
+			if(player.yVelocity<-3) {
+				player.yVelocity =-3;
 			}
 			break;
 		case 39:
-			holdRight=false;
+			game.interaction.goRight = false;
 			break;
 	}
 }
@@ -438,6 +454,6 @@ function keyUp(evt) {
 </script>
 </head>
 <body>
-<canvas id="gc" width="800" height="592"></canvas>
+<canvas id ="gc" width ="800" height ="592"></canvas>
 </body>
 </html>
